@@ -131,7 +131,7 @@ func ConvertSolarToLunar(inyear, inmonth, inday int) [4]int {
 			currentMonthDays = 29
 		}
 	} else {
-		if hex&(0x08000>>uint(month)-1) > 0 {
+		if hex&(0x08000>>(uint(month)-1)) > 0 {
 			currentMonthDays = 30
 		} else {
 			currentMonthDays = 29
