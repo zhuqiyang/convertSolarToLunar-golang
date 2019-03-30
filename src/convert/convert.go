@@ -143,13 +143,89 @@ func ConvertSolarToLunar(inyear, inmonth, inday int) [4]int {
 }
 
 // 农历转公历
-func convertLunarToSolar() {
+func ConvertLunarToSolar(year, month, day int, leap bool) [3]int {
+	var sum int = 0
+	for i := 1900; i < year; i++ {
+		sum += YearSum[i]
+	}
+	// 加上最后一年
+	hex := LunarInfomation[year-1900]
+	leapMonth := hex & 0xf
+	lunarMonth := 1
+	for i := 0x08000; i >= 0x00010; i >>= 1 {
+		if month == lunarMonth {
+			break
+		}
+		if hex&i > 0 {
+			sum += 30
+		} else {
+			sum += 29
+		}
+		if leapMonth == lunarMonth {
+			if hex&0xf0000 > 0 {
+				sum += 30
+			} else {
+				sum += 29
+			}
+		}
+		lunarMonth++
+	}
+	if month == leapMonth && leap {
+		if hex&(0x08000>>(uint(lunarMonth)-1)) > 0 {
+			sum += 30
+		} else {
+			sum += 29
+		}
+	}
+	sum = sum + day // 这个和是农历天数的总和
 
+	count := len(YearSum) + 1900
+	solarSum := -30
+	var solarYear int
+	for solarYear = 1900; solarYear < count; solarYear++ {
+		solarSum += getSolarYearDays(solarYear)
+		if solarSum >= sum {
+			break
+		}
+	}
+
+	sumMonth := getSolarYearDays(solarYear) - (solarSum - sum)
+	tempSum := 0
+	solarMonth := 1
+	for i := 0; i < 12; i++ {
+		tempSum += getSolarMonthDays(solarYear, solarMonth)
+		if tempSum >= sumMonth {
+			break
+		}
+		solarMonth++
+	}
+	lastMonth := getSolarMonthDays(solarYear, solarMonth)
+	solarDay := lastMonth - (tempSum - sumMonth)
+	return [3]int{solarYear, solarMonth, solarDay}
 }
 
 // 获取农历某年全年天数
 func getYearDays() {
 
+}
+
+func getSolarYearDays(year int) int {
+	if (year%4 == 0 && year%100 != 0) || year%400 == 0 {
+		return 366
+	} else {
+		return 365
+	}
+}
+
+func getSolarMonthDays(year, month int) int {
+	var days int
+	if (year%4 == 0 && year%100 != 0) || year%400 == 0 {
+		days = 29
+	} else {
+		days = 28
+	}
+	monthDays := map[int]int{1: 31, 2: days, 3: 31, 4: 30, 5: 31, 6: 30, 7: 31, 8: 31, 9: 30, 10: 31, 11: 30, 12: 31}
+	return monthDays[month]
 }
 
 // test
