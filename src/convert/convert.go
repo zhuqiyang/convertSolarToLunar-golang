@@ -72,8 +72,8 @@ func getTimestamp(timeStr string) (int64, error) {
 }
 
 // 公历转农历
-func ConvertSolarToLunar(inyear, inmonth, inday int) [4]int {
-	var date string = fmt.Sprintf("%04d-%02d-%02d", inyear, inmonth, inday)
+func ConvertSolarToLunar(solarYear, solarMonth, solarDay int) [4]int {
+	var date string = fmt.Sprintf("%04d-%02d-%02d", solarYear, solarMonth, solarDay)
 
 	// 1900-1-31 时间戳
 	var timestamp int64 = -2206425600
@@ -205,10 +205,113 @@ func ConvertLunarToSolar(year, month, day int, leap bool) [3]int {
 }
 
 // 获取农历某年全年天数
-func getYearDays() {
-
+func getYearDays(year int) int {
+	hex := LunarInfomation[year-1900]
+	sum := 0
+	for i := 0x08000; i >= 0x00010; i >>= 1 {
+		if hex&i > 0 {
+			sum += 30
+		} else {
+			sum += 29
+		}
+	}
+	if hex&0xf > 0 {
+		if hex&0xf0000 > 0 {
+			sum += 30
+		} else {
+			sum += 29
+		}
+	}
+	return sum
 }
 
+// 获取个农历日期到1900年的所有天数
+func getLunarTotalDays(year, month, day int, leap bool) int {
+	sum := 0
+	for lunarYear := 1900; lunarYear < year; lunarYear++ {
+		sum += YearSum[lunarYear]
+	}
+	hex := LunarInfomation[year-1900]
+	monthCount := 1
+	for i := 0x08000; monthCount < month; monthCount++ {
+		if hex&i > 0 {
+			sum += 30
+		} else {
+			sum += 29
+		}
+		// i >= 0x00010
+		i >>= 1
+	}
+	leapMonth := hex & 0xf
+	if leapMonth > 0 {
+		if leapMonth < month {
+			if hex&0xf0000 > 0 {
+				sum += 30
+			} else {
+				sum += 29
+			}
+		} else if leapMonth == month && leap {
+			if hex&0xf0000 > 0 {
+				sum += 30
+			} else {
+				sum += 29
+			}
+		}
+	}
+	return sum + day
+}
+
+// 获取流日天干地支的索引值,从0开始
+func getDayGanZhiIndex(year, month, day int, leap bool) int {
+	days := 43041 // 甲子日天数和
+	differ := getLunarTotalDays(year, month, day, leap) - days
+	if differ < 0 {
+		differ = -differ
+	}
+	return differ % 60
+}
+
+// 获取农历某月天数
+func getLunarMonthDays(year, month int, leapMonth bool) int {
+	hex := LunarInfomation[year-1900]
+	if leapMonth {
+		if hex&0xf > 0 {
+			if hex&0xf0000 > 0 {
+				return 30
+			} else {
+				return 29
+			}
+		} else {
+			return 0
+		}
+	} else {
+		if hex&(0x08000>>(uint(month)-1)) > 0 {
+			return 30
+		} else {
+			return 29
+		}
+	}
+}
+
+// 获取农历某年闰月的月份,为零的时候没有闰月
+func getLunarLeapMonth(year int) int {
+	return LunarInfomation[year-1900] & 0xf
+}
+
+// 某年闰月天数
+func getLunarLeapMonthDays(year int) int {
+	hex := LunarInfomation[year-1900]
+	if hex&0xf > 0 {
+		if hex&0xf0000 > 0 {
+			return 30
+		} else {
+			return 29
+		}
+	}
+	return -1
+}
+
+// 获取公历全年天数
 func getSolarYearDays(year int) int {
 	if (year%4 == 0 && year%100 != 0) || year%400 == 0 {
 		return 366
@@ -217,6 +320,7 @@ func getSolarYearDays(year int) int {
 	}
 }
 
+// 获取公历某月天数
 func getSolarMonthDays(year, month int) int {
 	var days int
 	if (year%4 == 0 && year%100 != 0) || year%400 == 0 {
@@ -228,7 +332,16 @@ func getSolarMonthDays(year, month int) int {
 	return monthDays[month]
 }
 
-// test
-func Add() {
-	fmt.Println("This is add")
+// 判断某年是否是闰年
+func isLeapYear(year int) bool {
+	if (year%4 == 0 && year%100 != 0) || year%400 == 0 {
+		return true
+	} else {
+		return false
+	}
+}
+
+// 获取某年闰月月份
+func getLeapMonth(year int) int {
+	return LunarInfomation[year-1900] & 0xf
 }
