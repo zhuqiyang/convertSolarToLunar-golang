@@ -53,11 +53,6 @@ var yearSum = map[int]int{
 	2090: 384, 2091: 354, 2092: 355, 2093: 384, 2094: 355, 2095: 354, 2096: 384, 2097: 354, 2098: 354, 2099: 384,
 }
 
-func init() {
-	// fmt.Printf("%#x %d \n\n", lunarInfomation, len(lunarInfomation))
-	// fmt.Printf("%d \n %d \n", yearSum, len(yearSum))
-}
-
 // 获取时间戳
 func getTimestamp(timeStr string) (int64, error) {
 	loc, err := time.LoadLocation("Local")
