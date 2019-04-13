@@ -1,3 +1,5 @@
+# 使用方法
+```golang
 func main() {
 	// 公历转农历
 	// a := convert.ConvertSolarToLunar(1998, 4, 14) // 1998-3-18
@@ -10,3 +12,4 @@ func main() {
 	fmt.Println(a)
 
 }
+```
